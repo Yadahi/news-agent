@@ -66,7 +66,7 @@ def write_article(topic):
                 "-p", f"Write a news article about: {topic}",  # -p is the prompt flag
                 "--system-prompt", SYSTEM_PROMPT,               # editorial instructions for Claude
                 "--output-format", "json",                      # ask Claude to return structured JSON
-                "--max-turns", "1",                             # one-shot: no back-and-forth conversation
+                "--max-turns", "3",                             # one-shot: no back-and-forth conversation
             ],
             capture_output=True,  # capture stdout and stderr instead of printing them to the terminal
             text=True,            # decode bytes → str automatically (using the system's default encoding)
@@ -82,6 +82,7 @@ def write_article(topic):
             raise Exception(f"Claude Code CLI failed: {result.stderr}")
 
         raw_output = result.stdout  # The full text Claude printed to stdout
+        print(f"Raw Claude output: {raw_output[:500]}")
 
     except FileNotFoundError:
         # Raised when the OS can't find the `claude` executable — it's not installed or not on PATH.
@@ -99,6 +100,7 @@ def write_article(topic):
         # The outer JSON envelope has a "result" key whose value is the actual article JSON (as a string).
         claude_response = json.loads(raw_output)
         article_text = claude_response.get("result", raw_output)
+        print(f"Parsed article: {article_text}")
         # .get("result", raw_output) means: use claude_response["result"] if it exists,
         # otherwise fall back to raw_output (so we don't crash on unexpected response shapes).
     except json.JSONDecodeError:

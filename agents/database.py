@@ -1,9 +1,13 @@
 # database.py
 # The database abstraction layer for the newsroom task system.
 #
-# This file is the ONLY place in the project that talks to SQLite directly.
-# Everything else — the runner, the Express API — calls functions from here.
+# This file handles all SQLite operations for the Python side of the project.
+# The runner and any future Python agents call functions from here
+# instead of writing SQL directly.
 # That means if you ever switch to PostgreSQL, you only rewrite this file.
+#
+# The Express API will have its own equivalent file (db.js) that talks
+# to the same newsroom.db database, written in JavaScript.
 #
 # SQLite is not a server. It's a library that reads/writes a single file.
 # Python has it built in — no pip install needed.
@@ -197,7 +201,42 @@ def update_task(task_id, status, result=None):
     conn.close()
 
 
-# ─── FUNCTION 5: GET ALL TASKS ─────────────────────────────────────
+# ─── FUNCTION 5: DELETE A TASK ──────────────────────────────────────
+# Removes a task from the database entirely.
+# Used for cleaning up old tasks, removing failed tasks, or
+# clearing test data. Once deleted, the task is gone — there's no undo.
+#
+# The dashboard will use this (via Express) to let you remove tasks
+# from the task list. The runner doesn't need this — it only reads
+# and updates tasks, never deletes them.
+
+def delete_task(task_id):
+    """
+    Delete a task from the database by its ID.
+
+    Args:
+        task_id: The unique ID of the task to delete.
+    """
+    conn = get_connection()
+
+    # DELETE FROM removes rows from a table.
+    # WHERE id = ? makes sure we only delete the one task we want.
+    # Without the WHERE clause, it would delete ALL tasks — be careful!
+    # The (task_id,) is a tuple with one item — the trailing comma
+    # is required because (task_id) without a comma is just parentheses,
+    # not a tuple. Python needs the comma to know it's a tuple.
+    conn.execute(
+        """
+        DELETE FROM tasks WHERE id = ?
+        """,
+        (task_id,)
+    )
+
+    conn.commit()
+    conn.close()
+
+
+# ─── FUNCTION 6: GET ALL TASKS ─────────────────────────────────────
 # The dashboard calls this to display everything.
 
 def get_all_tasks():
