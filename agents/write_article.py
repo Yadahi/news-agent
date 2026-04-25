@@ -65,7 +65,7 @@ def write_article(topic):
                 "claude",
                 "-p", f"Write a news article about: {topic}",  # -p is the prompt flag
                 "--system-prompt", SYSTEM_PROMPT,               # editorial instructions for Claude
-                "--output-format", "json",                      # ask Claude to return structured JSON
+                "--output-format", "text",                      # plain text output — avoids double JSON parsing
                 "--max-turns", "3",                             # one-shot: no back-and-forth conversation
             ],
             capture_output=True,  # capture stdout and stderr instead of printing them to the terminal
@@ -94,26 +94,14 @@ def write_article(topic):
         raise Exception("Claude Code took too long to respond (>120 seconds)")
 
     # ── Parse the response ──────────────────────────────────────
+    # With --output-format text, stdout is Claude's raw response — no outer envelope.
+    # The system prompt tells Claude to return plain JSON, but it sometimes wraps it
+    # in a ```json ... ``` code fence anyway. Strip those fences if present.
 
-    try:
-        # json.loads() turns the raw JSON string from Claude into a Python dict.
-        # The outer JSON envelope has a "result" key whose value is the actual article JSON (as a string).
-        claude_response = json.loads(raw_output)
-        article_text = claude_response.get("result", raw_output)
-        print(f"Parsed article: {article_text}")
-        # .get("result", raw_output) means: use claude_response["result"] if it exists,
-        # otherwise fall back to raw_output (so we don't crash on unexpected response shapes).
-    except json.JSONDecodeError:
-        # If the whole output isn't valid JSON, treat it as plain text and try to parse it below.
-        article_text = raw_output
-
-    # Claude sometimes wraps JSON in a Markdown code block (```json … ```).
-    # Strip those fences so json.loads() can parse the actual content.
-    if isinstance(article_text, str):
-        article_text = article_text.strip()
-        if article_text.startswith("```"):
-            lines = article_text.split("\n")
-            article_text = "\n".join(lines[1:-1])  # drop first line (```json) and last line (```)
+    article_text = raw_output.strip()
+    if article_text.startswith("```"):
+        lines = article_text.split("\n")
+        article_text = "\n".join(lines[1:-1])  # drop first line (```json) and last line (```)
 
     try:
         # Now parse the article JSON string into a dict with keys like "title", "body", "summary", etc.
@@ -187,8 +175,7 @@ def push_to_tina(article):
         # We pass the GraphQL query + variables as JSON in the request body.
         tina_response = requests.post(
             TINA_GRAPHQL_URL,
-            json={"query": CREATE_POST_MUTATION, "variables": variables},  # json= auto-sets Content-Type header
-            headers={"Content-Type": "application/json"},
+            json={"query": CREATE_POST_MUTATION, "variables": variables},
         )
         # .json() parses the response body from JSON string → Python dict
         tina_data = tina_response.json()

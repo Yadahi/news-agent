@@ -17,6 +17,7 @@
 import sqlite3        # Built into Python — talks to SQLite databases
 import json           # For converting Python dicts to/from JSON strings
 import uuid           # For generating unique task IDs
+import os             # For resolving absolute file paths
 from datetime import datetime, timezone  # For timestamps
 
 
@@ -24,8 +25,10 @@ from datetime import datetime, timezone  # For timestamps
 # This is the actual file on disk. When this runs the first time,
 # SQLite creates it automatically. After that, it just opens it.
 # We put it in the project root (one level up from agents/).
+# __file__ is the absolute path of this script, so this works
+# regardless of which directory you run Python from.
 
-DATABASE_PATH = "../newsroom.db"
+DATABASE_PATH = os.path.join(os.path.dirname(__file__), "..", "newsroom.db")
 
 
 # ─── HELPER: GET A CONNECTION ───────────────────────────────────────

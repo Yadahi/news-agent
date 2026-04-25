@@ -104,7 +104,7 @@ def run_pending_tasks():
             #
             # The agent function returns a result — for write_article,
             # that's the article dict with title, summary, body, tags, author.
-            result = agent_fn(task_input["topic"])
+            result = agent_fn(**task_input)
 
             # ── Step 4b: Push to TinaCMS ────────────────────────
             # For now, we push right after writing. Later when you add
