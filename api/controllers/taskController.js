@@ -3,8 +3,55 @@ const db = require("../db");
 
 function getAllTasks(req, res, next) {
   try {
-    const tasks = db.prepare("SELECT * FROM tasks").all();
-    res.json(tasks);
+    const { type, status, sort, order, page, limit } = req.query;
+    const allowedSortFields = ["type", "status", "created_at"];
+    let sql = "SELECT * FROM tasks";
+    let countSql = "SELECT COUNT(*) as count FROM tasks";
+    const pageNum = parseInt(page) || 1;
+    const limitNum = parseInt(limit) || 10;
+    const sortField = allowedSortFields.includes(sort) ? sort : "created_at";
+    const sortOrder = order === "desc" ? "DESC" : "ASC";
+
+    const conditions = [];
+    const values = [];
+
+    if (type) {
+      conditions.push("type=?");
+      values.push(type);
+    }
+
+    if (status) {
+      conditions.push("status=?");
+      values.push(status);
+    }
+
+    if (conditions.length > 0) {
+      sql += " WHERE " + conditions.join(" AND ");
+      countSql += " WHERE " + conditions.join(" AND ");
+    }
+
+    const total = db.prepare(countSql).get(...values).count;
+
+    // sorting
+    sql += ` ORDER BY ${sortField} ${sortOrder}`;
+
+    // pagination
+    if (limit && page) {
+      const offset = (pageNum - 1) * limitNum;
+      values.push(limitNum);
+      values.push(offset);
+      sql += " LIMIT ? OFFSET ? ";
+    }
+
+    const tasks = db.prepare(sql).all(...values);
+
+    res.json({
+      data: tasks,
+      total,
+      page: pageNum,
+      limit: limitNum,
+      totalPage: Math.ceil(total / limitNum),
+    });
   } catch (error) {
     next(error);
   }
