@@ -76,24 +76,23 @@ function addTask(req, res, next) {
 function updateTask(req, res, next) {
   try {
     const { id } = req.params;
-    const { status, result } = req.body;
+    const { status } = req.body;
 
-    const result_str = result ? JSON.stringify(result) : null;
-    const completed_at =
-      status === "done" || status === "failed"
-        ? new Date().toISOString()
-        : null;
+    let completed_at = null;
+
+    if (status === "cancelled") {
+      completed_at = new Date().toISOString();
+    }
 
     const info = db
       .prepare(
-        "UPDATE tasks SET status = ?, result = ?, completed_at = ? WHERE id = ?",
+        "UPDATE tasks SET status = ?, result = NULL, completed_at = ? WHERE id = ?",
       )
-      .run(status, result_str, completed_at, id);
+      .run(status, completed_at, id);
 
     if (info.changes === 0) {
       return res.status(404).json({ error: "Task not found" });
     }
-
     res.json({ message: "Task updated" });
   } catch (error) {
     next(error);
