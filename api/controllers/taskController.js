@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const db = require("../db");
+const AppError = require("../utils/AppError");
 
 function getAllTasks(req, res, next) {
   try {
@@ -91,7 +92,7 @@ function updateTask(req, res, next) {
       .run(status, completed_at, id);
 
     if (info.changes === 0) {
-      return res.status(404).json({ error: "Task not found" });
+      return next(new AppError("Task not found", 404));
     }
     res.json({ message: "Task updated" });
   } catch (error) {
@@ -106,7 +107,7 @@ function deleteTask(req, res, next) {
     const info = db.prepare("DELETE FROM tasks WHERE id = ?").run(id);
 
     if (info.changes === 0) {
-      return res.status(404).json({ error: "Task not found" });
+      return next(new AppError("Task not found", 404));
     }
 
     res.json({ message: "Task deleted" });

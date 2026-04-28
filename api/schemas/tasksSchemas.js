@@ -8,3 +8,5 @@ const createTaskSchema = z.object({
 const updateTaskSchema = z.object({
   status: z.enum(["pending", "cancelled"]),
 });
+
+module.exports = { createTaskSchema, updateTaskSchema };
