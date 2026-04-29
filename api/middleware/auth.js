@@ -12,6 +12,7 @@ const authMiddleware = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(authToken, process.env.SECRET_KEY);
+    req.user = decoded;
     next();
   } catch (error) {
     next(new AppError("Not authorized", 401));
