@@ -6,7 +6,8 @@ const validate = (schema) => {
       schema.parse(req.body);
       next();
     } catch (error) {
-      const err = new AppError(error.message, 400);
+      const messages = error.issues.map((e) => e.message).join(", ");
+      const err = new AppError(messages, 400);
       next(err);
     }
   };
