@@ -17,7 +17,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS tasks (
             completed_at TEXT)`);
 
 db.exec(`CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id TEXT PRIMARY KEY,
             username TEXT NOT NULL UNIQUE,
             password TEXT NOT NULL
   )`);

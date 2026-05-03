@@ -1,17 +1,19 @@
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const db = require("../db");
 const AppError = require("../utils/AppError");
 
 function register(req, res, next) {
   try {
     const { username, password } = req.body;
+    const id = crypto.randomUUID();
 
     const hashedPassword = bcrypt.hashSync(password, 10);
 
     const stmt = db
-      .prepare("INSERT INTO users (username, password) VALUES (?, ?)")
-      .run(username, hashedPassword);
+      .prepare("INSERT INTO users (id, username, password) VALUES (?, ?, ?)")
+      .run(id, username, hashedPassword);
 
     res.status(201).json({ message: "User registered" });
   } catch (error) {
