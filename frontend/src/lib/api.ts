@@ -1,5 +1,14 @@
 const API_URL = "http://localhost:3000";
 
+interface TaskFilters {
+  page?: number;
+  limit?: number;
+  status?: string;
+  type?: string;
+  sort?: string;
+  order?: string;
+}
+
 export type TaskType = "write_article";
 
 async function authFetch(url: string, options: RequestInit = {}) {
@@ -62,8 +71,18 @@ export const login = async (username: string, password: string) => {
   return await res.json();
 };
 
-export const getTasks = async (page = 1, limit = 10) => {
-  return authFetch(`${API_URL}/api/tasks?page=${page}&limit=${limit}`);
+export const getTasks = async (filters: TaskFilters = {}) => {
+  const params = new URLSearchParams();
+
+  params.set("page", String(filters.page ?? 1));
+  params.set("limit", String(filters.limit ?? 10));
+
+  if (filters.status) params.set("status", filters.status);
+  if (filters.type) params.set("type", filters.type);
+  if (filters.sort) params.set("sort", filters.sort);
+  if (filters.order) params.set("order", filters.order);
+
+  return authFetch(`${API_URL}/api/tasks?${params.toString()}`);
 };
 
 export const createTask = async (type: TaskType, topic: string) => {

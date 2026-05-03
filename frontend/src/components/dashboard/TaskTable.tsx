@@ -9,6 +9,8 @@ import {
 import { getTasks } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import SortableHeader from "./SortableHeader";
+import FilterSelect from "./FilterSelect";
 
 interface Task {
   id: string;
@@ -36,12 +38,23 @@ function parseTopic(input: string): string {
   }
 }
 
-export function TaskTable() {
+export default function TaskTable() {
   const [page, setPage] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sort, setSort] = useState("created_at");
+  const [order, setOrder] = useState("desc");
+  const [typeFilter, setTypeFilter] = useState("");
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["tasks", page],
-    queryFn: () => getTasks(page),
+    queryKey: ["tasks", page, statusFilter, sort, order, typeFilter],
+    queryFn: () =>
+      getTasks({
+        page,
+        status: statusFilter || undefined,
+        type: typeFilter || undefined,
+        sort,
+        order,
+      }),
   });
 
   if (isLoading)
@@ -51,27 +64,75 @@ export function TaskTable() {
   if (error)
     return <p className="text-sm text-red-500 p-4">Failed to load tasks.</p>;
 
+  function handleSort(field: string) {
+    if (sort === field) {
+      setOrder(order === "asc" ? "desc" : "asc");
+    } else {
+      setSort(field);
+      setOrder("asc");
+    }
+  }
+
   const tasks: Task[] = data?.data ?? [];
   const total: number = data?.total ?? 0;
   const totalPage: number = data?.totalPage ?? 1;
 
   return (
     <div className="rounded-lg border border-border overflow-hidden">
+      <div className="flex items-center gap-3 p-4 border-b border-border">
+        <FilterSelect
+          value={statusFilter}
+          onValueChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+          placeholder="All statuses"
+          options={[
+            { value: "pending", label: "Pending" },
+            { value: "running", label: "Running" },
+            { value: "done", label: "Done" },
+            { value: "failed", label: "Failed" },
+            { value: "cancelled", label: "Cancelled" },
+          ]}
+        />
+        <FilterSelect
+          value={typeFilter}
+          onValueChange={(v) => {
+            setTypeFilter(v);
+            setPage(1);
+          }}
+          placeholder="All types"
+          options={[{ value: "write_article", label: "Write Article" }]}
+        />
+      </div>
+
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50 hover:bg-muted/50">
-            <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Status
-            </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Type
-            </TableHead>
+            <SortableHeader
+              label="Status"
+              field="status"
+              sort={sort}
+              order={order}
+              onSort={handleSort}
+            />
+            <SortableHeader
+              label="Type"
+              field="type"
+              sort={sort}
+              order={order}
+              onSort={handleSort}
+            />
             <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Topic
             </TableHead>
-            <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Created
-            </TableHead>
+            <SortableHeader
+              label="Created"
+              field="created_at"
+              sort={sort}
+              order={order}
+              onSort={handleSort}
+            />
             <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Completed
             </TableHead>

@@ -1,5 +1,5 @@
 import { CreateTaskForm } from "@/components/dashboard/CreateTaskForm";
-import { TaskTable } from "@/components/dashboard/TaskTable";
+import TaskTable from "@/components/dashboard/TaskTable";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { createFileRoute } from "@tanstack/react-router";
 
