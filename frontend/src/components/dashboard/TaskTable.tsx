@@ -9,10 +9,12 @@ import {
 import { getTasks } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import SortableHeader from "./SortableHeader";
-import FilterSelect from "./FilterSelect";
+import { SortableHeader } from "./SortableHeader";
+import { FilterSelect } from "./FilterSelect";
+import { parseTopic } from "@/lib/utils";
+import { TaskActions } from "./TaskActions";
 
-interface Task {
+export interface Task {
   id: string;
   type: string;
   input: string;
@@ -29,16 +31,7 @@ function formatDate(iso: string): string {
   });
 }
 
-function parseTopic(input: string): string {
-  try {
-    const parsed = JSON.parse(input);
-    return parsed.topic ?? "—";
-  } catch {
-    return "—";
-  }
-}
-
-export default function TaskTable() {
+export function TaskTable() {
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("");
   const [sort, setSort] = useState("created_at");
@@ -136,6 +129,9 @@ export default function TaskTable() {
             <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Completed
             </TableHead>
+            <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Actions
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -155,6 +151,9 @@ export default function TaskTable() {
               </TableCell>
               <TableCell className="px-4 py-3 text-sm text-muted-foreground tabular-nums">
                 {task.completed_at ? formatDate(task.completed_at) : "—"}
+              </TableCell>
+              <TableCell className="px-4 py-3">
+                <TaskActions task={task} />
               </TableCell>
             </TableRow>
           ))}

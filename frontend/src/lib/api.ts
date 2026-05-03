@@ -91,3 +91,19 @@ export const createTask = async (type: TaskType, topic: string) => {
     body: JSON.stringify({ type, input: { topic } }),
   });
 };
+
+export const editTask = async (
+  id: string,
+  updates: { status?: string; input?: { topic: string } },
+) => {
+  return authFetch(`${API_URL}/api/tasks/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(updates),
+  });
+};
+
+export const deleteTask = async (id: string) => {
+  return authFetch(`${API_URL}/api/tasks/${id}`, {
+    method: "DELETE",
+  });
+};

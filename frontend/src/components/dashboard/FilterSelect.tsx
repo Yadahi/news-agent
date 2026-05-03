@@ -13,7 +13,7 @@ interface FilterSelectProps {
   options: { value: string; label: string }[];
 }
 
-export default function FilterSelect({
+export function FilterSelect({
   value,
   onValueChange,
   placeholder,

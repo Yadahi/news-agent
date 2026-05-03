@@ -1,6 +1,6 @@
 import { TableHead } from "@/components/ui/table";
 
-export default function SortableHeader({
+export function SortableHeader({
   label,
   field,
   sort,
