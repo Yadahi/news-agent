@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Card,
@@ -15,6 +15,12 @@ import { useMutation } from "@tanstack/react-query";
 import { login, register } from "@/lib/api";
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   component: LoginPage,
 });
 

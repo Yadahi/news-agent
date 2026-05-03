@@ -13,8 +13,8 @@ function getAllTasks(req, res, next) {
     const sortField = allowedSortFields.includes(sort) ? sort : "created_at";
     const sortOrder = order === "desc" ? "DESC" : "ASC";
 
-    const conditions = [];
-    const values = [];
+    const conditions = ["user_id=?"];
+    const values = [req.user.id];
 
     if (type) {
       conditions.push("type=?");
@@ -65,8 +65,8 @@ function addTask(req, res, next) {
     const created_at = new Date().toISOString();
 
     db.prepare(
-      "INSERT INTO tasks (id, type, input, status, created_at) VALUES (?, ?, ?, 'pending', ?)",
-    ).run(id, type, JSON.stringify(input), created_at);
+      "INSERT INTO tasks (id, type, input, status, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?)",
+    ).run(id, type, JSON.stringify(input), req.user.id, created_at);
 
     res.status(201).json({ id, type, input, status: "pending", created_at });
   } catch (error) {
@@ -77,23 +77,49 @@ function addTask(req, res, next) {
 function updateTask(req, res, next) {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, input } = req.body;
+
+    // Check task exists
+    const task = db
+      .prepare("SELECT * FROM tasks WHERE id = ? AND user_id = ?")
+      .get(id, req.user.id);
+    if (!task) {
+      return next(new AppError("Task not found", 404));
+    }
+
+    if (input && (task.status === "running" || task.status === "done")) {
+      return next(
+        new AppError("Cannot edit a task that is running or completed", 400),
+      );
+    }
 
     let completed_at = null;
-
     if (status === "cancelled") {
       completed_at = new Date().toISOString();
     }
 
-    const info = db
-      .prepare(
-        "UPDATE tasks SET status = ?, result = NULL, completed_at = ? WHERE id = ?",
-      )
-      .run(status, completed_at, id);
+    const updates = [];
+    const values = [];
 
-    if (info.changes === 0) {
-      return next(new AppError("Task not found", 404));
+    if (status) {
+      updates.push("status = ?");
+      values.push(status);
+      updates.push("result = NULL");
+      updates.push("completed_at = ?");
+      values.push(completed_at);
     }
+
+    if (input) {
+      updates.push("input = ?");
+      values.push(JSON.stringify(input));
+    }
+
+    values.push(id);
+    values.push(req.user.id);
+    db.prepare(
+      `UPDATE tasks SET ${updates.join(", ")} WHERE id = ? AND user_id = ?`,
+    ).run(...values);
+
     res.json({ message: "Task updated" });
   } catch (error) {
     next(error);
@@ -104,7 +130,9 @@ function deleteTask(req, res, next) {
   try {
     const { id } = req.params;
 
-    const info = db.prepare("DELETE FROM tasks WHERE id = ?").run(id);
+    const info = db
+      .prepare("DELETE FROM tasks WHERE id = ?  AND user_id = ?")
+      .run(id, req.user.id);
 
     if (info.changes === 0) {
       return next(new AppError("Task not found", 404));

@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({
   beforeLoad: () => {
-    throw redirect({ to: "/login" });
+    const token = localStorage.getItem("token");
+    throw redirect({ to: token ? "/dashboard" : "/login" });
   },
 });

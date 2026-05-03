@@ -1,9 +1,15 @@
 import { CreateTaskForm } from "@/components/dashboard/CreateTaskForm";
 import { TaskTable } from "@/components/dashboard/TaskTable";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboard")({
+  beforeLoad: () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: DashboardPage,
 });
 
