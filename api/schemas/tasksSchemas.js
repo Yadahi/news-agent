@@ -8,7 +8,7 @@ const createTaskSchema = z.object({
 });
 
 const updateTaskSchema = z.object({
-  status: z.enum(["pending", "cancelled"]),
+  status: z.enum(["pending", "cancelled"]).optional(),
   input: z.object({ topic: z.string().min(1) }).optional(),
 });
 
