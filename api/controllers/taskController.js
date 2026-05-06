@@ -1,5 +1,7 @@
 const crypto = require("crypto");
 const db = require("../db");
+const { spawn } = require("child_process");
+const path = require("path");
 const AppError = require("../utils/AppError");
 
 function getAllTasks(req, res, next) {
@@ -144,4 +146,35 @@ function deleteTask(req, res, next) {
   }
 }
 
-module.exports = { getAllTasks, addTask, updateTask, deleteTask };
+function runAgents(req, res, next) {
+  try {
+    const runner = spawn(
+      path.join(__dirname, "..", "..", "venv", "bin", "python3"),
+      [path.join(__dirname, "..", "..", "agents", "agent_runner.py")],
+      { cwd: path.join(__dirname, "..", "..") },
+    );
+
+    let output = "";
+    let errorOutput = "";
+
+    runner.stdout.on("data", (data) => {
+      output += data.toString();
+    });
+
+    runner.stderr.on("data", (data) => {
+      errorOutput += data.toString();
+    });
+
+    runner.on("close", (code) => {
+      if (code === 0) {
+        res.json({ success: true, output });
+      } else {
+        res.status(500).json({ success: false, error: errorOutput || output });
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { getAllTasks, addTask, updateTask, deleteTask, runAgents };

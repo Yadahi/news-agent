@@ -14,6 +14,7 @@ import { FilterSelect } from "./FilterSelect";
 import { formatDate, parseTopic } from "@/lib/utils";
 import { TaskActions } from "./TaskActions";
 import { StatusBadge } from "./StatusBadge";
+import { Button } from "@/components/ui/button";
 
 export interface Task {
   id: string;
@@ -129,52 +130,66 @@ export function TaskTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {tasks.map((task) => (
-            <TableRow key={task.id} className="border-border">
-              <TableCell className="px-4 py-3">
-                <StatusBadge status={task.status} />
-              </TableCell>
-              <TableCell className="px-4 py-3 text-sm text-muted-foreground">
-                {task.type}
-              </TableCell>
-              <TableCell className="px-4 py-3 text-sm font-medium max-w-xs truncate">
-                {parseTopic(task.input)}
-              </TableCell>
-              <TableCell className="px-4 py-3 text-sm text-muted-foreground tabular-nums">
-                {formatDate(task.created_at)}
-              </TableCell>
-              <TableCell className="px-4 py-3 text-sm text-muted-foreground tabular-nums">
-                {task.completed_at ? formatDate(task.completed_at) : "—"}
-              </TableCell>
-              <TableCell className="px-4 py-3">
-                <TaskActions task={task} />
+          {tasks.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={6}
+                className="text-center py-12 text-muted-foreground"
+              >
+                {statusFilter || typeFilter
+                  ? "No tasks match this filter"
+                  : "No tasks yet — create one to get started"}
               </TableCell>
             </TableRow>
-          ))}
+          ) : (
+            tasks.map((task) => (
+              <TableRow key={task.id} className="border-border">
+                <TableCell className="px-4 py-3">
+                  <StatusBadge status={task.status} />
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-muted-foreground">
+                  {task.type}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm font-medium max-w-xs truncate">
+                  {parseTopic(task.input)}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-muted-foreground tabular-nums">
+                  {formatDate(task.created_at)}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-sm text-muted-foreground tabular-nums">
+                  {task.completed_at ? formatDate(task.completed_at) : "—"}
+                </TableCell>
+                <TableCell className="px-4 py-3">
+                  <TaskActions task={task} />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
       <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/30">
         <p className="text-xs text-muted-foreground">
           Showing {tasks.length} of {total} tasks
         </p>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
-          <button
+        <div className="flex items-center gap-3">
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage(page - 1)}
             disabled={page <= 1}
-            className="hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             ← Previous
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setPage(page + 1)}
             disabled={page >= totalPage}
-            className="hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           >
             Next →
-          </button>
+          </Button>
         </div>
       </div>
     </div>
   );
 }
-

@@ -107,3 +107,9 @@ export const deleteTask = async (id: string) => {
     method: "DELETE",
   });
 };
+
+export const runAgents = async () => {
+  return authFetch(`${API_URL}/api/run`, {
+    method: "POST",
+  });
+};

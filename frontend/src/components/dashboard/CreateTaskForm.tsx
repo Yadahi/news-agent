@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/select";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import { createTask, type TaskType } from "@/lib/api";
+import { runAgents } from "@/lib/api";
+import { toast } from "sonner";
 
 export function CreateTaskForm() {
   const [type, setType] = useState<TaskType>("write_article");
@@ -27,6 +29,18 @@ export function CreateTaskForm() {
       setTopic("");
     },
     onError: () => {},
+  });
+
+  const runMutation = useMutation({
+    mutationFn: runAgents,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      toast.success("Agents finished processing");
+    },
+    onError: (error) => {
+      console.log("Run error:", error);
+      toast.error(error.message);
+    },
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -69,6 +83,14 @@ export function CreateTaskForm() {
             className="flex-1"
           />
           <Button type="submit">Assign Task</Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => runMutation.mutate()}
+            disabled={runMutation.isPending}
+          >
+            {runMutation.isPending ? "Running..." : "Run Agents"}
+          </Button>
         </div>
       </div>
     </form>
