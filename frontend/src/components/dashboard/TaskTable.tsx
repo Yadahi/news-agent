@@ -11,8 +11,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { SortableHeader } from "./SortableHeader";
 import { FilterSelect } from "./FilterSelect";
-import { parseTopic } from "@/lib/utils";
+import { formatDate, parseTopic } from "@/lib/utils";
 import { TaskActions } from "./TaskActions";
+import { StatusBadge } from "./StatusBadge";
 
 export interface Task {
   id: string;
@@ -22,13 +23,6 @@ export interface Task {
   result: string | null;
   created_at: string;
   completed_at: string | null;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
 }
 
 export function TaskTable() {
@@ -184,20 +178,3 @@ export function TaskTable() {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    pending: "bg-yellow-100 text-yellow-800",
-    running: "bg-blue-100 text-blue-800",
-    done: "bg-green-100 text-green-800",
-    failed: "bg-red-100 text-red-800",
-    cancelled: "bg-gray-100 text-gray-800",
-  };
-
-  return (
-    <span
-      className={`text-xs font-medium px-2 py-1 rounded ${colors[status] || ""}`}
-    >
-      {status.toUpperCase()}
-    </span>
-  );
-}

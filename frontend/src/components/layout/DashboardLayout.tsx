@@ -1,6 +1,7 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { Button } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 
@@ -28,6 +29,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 p-4">{children}</main>
       </div>
+      <Toaster />
     </SidebarProvider>
   );
 }
