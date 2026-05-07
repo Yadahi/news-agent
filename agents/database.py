@@ -71,8 +71,9 @@ def create_tables():
             input TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'pending',
             result TEXT,
+            depends_on TEXT,
             created_at TEXT NOT NULL,
-            completed_at TEXT
+            completed_at TEXT,
         )
     """)
 
@@ -89,7 +90,7 @@ def create_tables():
 # Creates a new task with status "pending."
 # The runner will pick it up later.
 
-def add_task(task_type, task_input):
+def add_task(task_type, task_input, depends_on=None):
     """
     Add a new task to the database.
 
@@ -117,10 +118,10 @@ def add_task(task_type, task_input):
     # Example: {"topic": "solar energy"} → '{"topic": "solar energy"}'
     conn.execute(
         """
-        INSERT INTO tasks (id, type, input, status, created_at)
-        VALUES (?, ?, ?, 'pending', ?)
+        INSERT INTO tasks (id, type, input, status, depends_on, created_at)
+        VALUES (?, ?, ?, 'pending', ?, ?)
         """,
-        (task_id, task_type, json.dumps(task_input), now)
+        (task_id, task_type, json.dumps(task_input), depends_on, now)
     )
 
     # The ? placeholders above are important for security.

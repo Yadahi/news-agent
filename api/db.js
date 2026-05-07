@@ -12,6 +12,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS tasks (
             input TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'pending',
             result TEXT,
+            depends_on TEXT,
             user_id INTEGER NOT NULL,
             created_at TEXT NOT NULL,
             completed_at TEXT)`);

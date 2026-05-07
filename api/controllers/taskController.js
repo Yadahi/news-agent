@@ -62,15 +62,61 @@ function getAllTasks(req, res, next) {
 
 function addTask(req, res, next) {
   try {
-    const { type, input } = req.body;
-    const id = crypto.randomUUID();
+    const { type, input, research_first } = req.body;
     const created_at = new Date().toISOString();
 
-    db.prepare(
-      "INSERT INTO tasks (id, type, input, status, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?)",
-    ).run(id, type, JSON.stringify(input), req.user.id, created_at);
+    if (type === "write_article" && research_first) {
+      // Create two tasks: research first, then write depends on it
+      const researchId = crypto.randomUUID();
+      const writeId = crypto.randomUUID();
 
-    res.status(201).json({ id, type, input, status: "pending", created_at });
+      db.prepare(
+        "INSERT INTO tasks (id, type, input, status, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?)",
+      ).run(
+        researchId,
+        "research_topic",
+        JSON.stringify(input),
+        req.user.id,
+        created_at,
+      );
+
+      db.prepare(
+        "INSERT INTO tasks (id, type, input, status, depends_on, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?, ?)",
+      ).run(
+        writeId,
+        "write_article",
+        JSON.stringify({ topic: input.topic }),
+        researchId,
+        req.user.id,
+        created_at,
+      );
+
+      res.status(201).json([
+        {
+          id: researchId,
+          type: "research_topic",
+          input,
+          status: "pending",
+          created_at,
+        },
+        {
+          id: writeId,
+          type: "write_article",
+          input: { topic: input.topic },
+          status: "pending",
+          depends_on: researchId,
+          created_at,
+        },
+      ]);
+    } else {
+      // Single task, same as before
+      const id = crypto.randomUUID();
+      db.prepare(
+        "INSERT INTO tasks (id, type, input, status, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?)",
+      ).run(id, type, JSON.stringify(input), req.user.id, created_at);
+
+      res.status(201).json({ id, type, input, status: "pending", created_at });
+    }
   } catch (error) {
     next(error);
   }

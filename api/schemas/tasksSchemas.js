@@ -4,7 +4,9 @@ const createTaskSchema = z.object({
   type: z.enum(["write_article"]),
   input: z.object({
     topic: z.string().trim().min(10, "Topic must be at least 10 characters"),
+    sources: z.array(z.string().url()).optional(),
   }),
+  research_first: z.boolean().optional(),
 });
 
 const updateTaskSchema = z.object({
