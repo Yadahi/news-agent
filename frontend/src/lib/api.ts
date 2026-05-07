@@ -85,10 +85,23 @@ export const getTasks = async (filters: TaskFilters = {}) => {
   return authFetch(`${API_URL}/api/tasks?${params.toString()}`);
 };
 
-export const createTask = async (type: TaskType, topic: string) => {
+export const createTask = async (
+  type: TaskType,
+  topic: string,
+  options?: {
+    research_first?: boolean;
+    edit_before_publish?: boolean;
+    sources?: string[];
+  },
+) => {
   return authFetch(`${API_URL}/api/tasks`, {
     method: "POST",
-    body: JSON.stringify({ type, input: { topic } }),
+    body: JSON.stringify({
+      type,
+      input: { topic, sources: options?.sources },
+      research_first: options?.research_first,
+      edit_before_publish: options?.edit_before_publish,
+    }),
   });
 };
 

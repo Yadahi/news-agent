@@ -173,6 +173,36 @@ def get_pending_tasks():
 # ─── FUNCTION 4: UPDATE A TASK ──────────────────────────────────────
 # The runner calls this to mark a task as "running", "done", or "failed".
 
+def get_task(task_id):
+    """
+    Fetch a single task by its ID.
+    The runner uses this to look up a parent task's result
+    when a task has a depends_on dependency.
+
+    Args:
+        task_id: The unique ID of the task to fetch.
+
+    Returns:
+        A dictionary with the task data, or None if not found.
+    """
+    conn = get_connection()
+
+    row = conn.execute(
+        "SELECT * FROM tasks WHERE id = ?", (task_id,)
+    ).fetchone()
+
+    if row is None:
+        conn.close()
+        return None
+
+    task = dict(row)
+    task["input"] = json.loads(task["input"])
+    if task["result"]:
+        task["result"] = json.loads(task["result"])
+
+    conn.close()
+    return task
+
 def update_task(task_id, status, result=None):
     """
     Update a task's status and optionally its result.

@@ -7,6 +7,7 @@ const createTaskSchema = z.object({
     sources: z.array(z.string().url()).optional(),
   }),
   research_first: z.boolean().optional(),
+  edit_before_publish: z.boolean().optional(),
 });
 
 const updateTaskSchema = z.object({

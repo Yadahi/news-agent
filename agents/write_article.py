@@ -38,21 +38,24 @@ from editorial_config import SYSTEM_PROMPT, TINA_GRAPHQL_URL, CREATE_POST_MUTATI
 # Now the runner can import this function and call it whenever a
 # "write_article" task appears in the database. Same logic, just reusable.
 
-def write_article(topic):
+def write_article(topic, research=None, **kwargs):
     """
     Generate a news article about the given topic using Claude Code CLI.
 
     Args:
-        topic: A string describing what to write about,
-               e.g. "renewable energy in Nova Scotia"
-
-    Returns:
-        A dictionary with keys: title, summary, body, tags, author
-
-    Raises:
-        Exception: If Claude fails or returns invalid JSON.
+        topic: A string describing what to write about.
+        research: Optional dict with research brief from the research agent.
+        **kwargs: Catches any extra keys in task_input so the function
+                  doesn't crash on unexpected fields.
     """
     print(f"Writing article about: {topic}")
+    
+    # Build the prompt
+    prompt = f"Write a news article about: {topic}"
+
+    if research:
+        prompt += f"\n\nUse this research as your source material. Base your article on these facts and cite these sources:\n\n{json.dumps(research, indent=2)}"
+
     print("Calling Claude Code CLI...")
 
     # ── Call Claude ──────────────────────────────────────────────
@@ -63,7 +66,7 @@ def write_article(topic):
         result = subprocess.run(
             [
                 "claude",
-                "-p", f"Write a news article about: {topic}",  # -p is the prompt flag
+                "-p", prompt,  # -p is the prompt flag
                 "--system-prompt", SYSTEM_PROMPT,               # editorial instructions for Claude
                 "--output-format", "text",                      # plain text output — avoids double JSON parsing
                 "--max-turns", "3",                             # one-shot: no back-and-forth conversation
@@ -102,6 +105,10 @@ def write_article(topic):
     if article_text.startswith("```"):
         lines = article_text.split("\n")
         article_text = "\n".join(lines[1:-1])  # drop first line (```json) and last line (```)
+
+    brace_index = article_text.find("{")
+    if brace_index > 0:
+        article_text = article_text[brace_index:]
 
     try:
         # Now parse the article JSON string into a dict with keys like "title", "body", "summary", etc.

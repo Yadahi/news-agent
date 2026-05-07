@@ -62,14 +62,18 @@ function getAllTasks(req, res, next) {
 
 function addTask(req, res, next) {
   try {
-    const { type, input, research_first } = req.body;
+    const { type, input, research_first, edit_before_publish } = req.body;
     const created_at = new Date().toISOString();
 
-    if (type === "write_article" && research_first) {
-      // Create two tasks: research first, then write depends on it
-      const researchId = crypto.randomUUID();
-      const writeId = crypto.randomUUID();
+    // For write_article, build the chain based on flags
+    const tasks = [];
+    let researchId = null;
+    let writeId = crypto.randomUUID();
+    let editId = null;
 
+    // Step 1: If research first, create research task
+    if (research_first) {
+      researchId = crypto.randomUUID();
       db.prepare(
         "INSERT INTO tasks (id, type, input, status, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?)",
       ).run(
@@ -80,43 +84,68 @@ function addTask(req, res, next) {
         created_at,
       );
 
+      tasks.push({
+        id: researchId,
+        type: "research_topic",
+        input,
+        status: "pending",
+        created_at,
+      });
+    }
+
+    const writeInput = { topic: input.topic };
+    if (!edit_before_publish) {
+      writeInput.publish = true; // write is the last step
+    }
+
+    // Step 2: Always create write task, depends on research if it exists
+    db.prepare(
+      "INSERT INTO tasks (id, type, input, status, depends_on, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?, ?)",
+    ).run(
+      writeId,
+      "write_article",
+      JSON.stringify(writeInput),
+      researchId,
+      req.user.id,
+      created_at,
+    );
+
+    tasks.push({
+      id: writeId,
+      type: "write_article",
+      input: { topic: input.topic },
+      status: "pending",
+      depends_on: researchId,
+      created_at,
+    });
+
+    // Step 3: If edit before publish, create edit task depending on write
+    if (edit_before_publish) {
+      editId = crypto.randomUUID();
+      const editInput = { topic: input.topic, publish: true }; // edit is the last step
+
       db.prepare(
         "INSERT INTO tasks (id, type, input, status, depends_on, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?, ?)",
       ).run(
+        editId,
+        "edit_article",
+        JSON.stringify(editInput),
         writeId,
-        "write_article",
-        JSON.stringify({ topic: input.topic }),
-        researchId,
         req.user.id,
         created_at,
       );
 
-      res.status(201).json([
-        {
-          id: researchId,
-          type: "research_topic",
-          input,
-          status: "pending",
-          created_at,
-        },
-        {
-          id: writeId,
-          type: "write_article",
-          input: { topic: input.topic },
-          status: "pending",
-          depends_on: researchId,
-          created_at,
-        },
-      ]);
-    } else {
-      // Single task, same as before
-      const id = crypto.randomUUID();
-      db.prepare(
-        "INSERT INTO tasks (id, type, input, status, user_id, created_at) VALUES (?, ?, ?, 'pending', ?, ?)",
-      ).run(id, type, JSON.stringify(input), req.user.id, created_at);
-
-      res.status(201).json({ id, type, input, status: "pending", created_at });
+      tasks.push({
+        id: editId,
+        type: "edit_article",
+        input: { topic: input.topic },
+        status: "pending",
+        depends_on: writeId,
+        created_at,
+      });
     }
+
+    res.status(201).json(tasks);
   } catch (error) {
     next(error);
   }

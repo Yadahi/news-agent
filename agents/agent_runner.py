@@ -15,12 +15,14 @@
 
 # Our database module — the abstraction layer we built.
 # These functions handle all the SQLite work so we never write SQL here.
-from database import get_pending_tasks, update_task
+from database import get_pending_tasks, update_task, get_task
 
 # Our agent functions — the actual workers.
 # write_article() calls Claude and returns an article dict.
 # push_to_tina() sends a finished article to TinaCMS as a draft.
 from write_article import write_article, push_to_tina
+from research_agent import research_topic
+from edit_article import edit_article
 
 
 # ─── AGENT REGISTRY ────────────────────────────────────────────────
@@ -38,6 +40,8 @@ from write_article import write_article, push_to_tina
 
 AGENTS = {
     "write_article": write_article,
+    "research_topic": research_topic,
+    "edit_article": edit_article,
 }
 
 
@@ -77,67 +81,60 @@ def run_pending_tasks():
         print(f"  Type:  {task_type}")
         print(f"  Input: {task_input}")
 
-        # ── Step 3: Find the right agent ────────────────────────
-        # Look up the task type in our AGENTS dictionary.
-        # .get() returns None if the key doesn't exist, instead of crashing.
+        # ── Check dependency ────────────────────────────────────
+        # If this task depends on another task, check if the parent
+        # is done. If not, skip this task for now. If the parent
+        # failed, mark this task as failed too.
+        if task.get("depends_on"):
+            parent = get_task(task["depends_on"])
+
+            if parent is None:
+                print(f"  ERROR: Dependency {task['depends_on']} not found")
+                update_task(task_id, "failed", {"error": "Dependency task not found"})
+                continue
+
+            if parent["status"] == "failed":
+                print(f"  ERROR: Dependency {task['depends_on']} failed")
+                update_task(task_id, "failed", {"error": "Dependency task failed"})
+                continue
+
+            if parent["status"] != "done":
+                print(f"  Skipping — waiting on dependency {task['depends_on']}")
+                continue
+
+            # Parent is done — inject its result into this task's input
+            if task_type == "edit_article":
+                task_input["article"] = parent["result"]
+                print(f"  Using article from task {task['depends_on']}")
+            elif task_type == "write_article":
+                task_input["research"] = parent["result"]
+                print(f"  Using research from task {task['depends_on']}")
+
+        # ── Find the right agent ────────────────────────────────
         agent_fn = AGENTS.get(task_type)
 
         if agent_fn is None:
-            # No agent registered for this task type.
-            # This would happen if someone added a task with a type
-            # we haven't built yet, like "edit_article" before the
-            # editor agent exists.
             print(f"  ERROR: No agent registered for task type '{task_type}'")
             update_task(task_id, "failed", {"error": f"Unknown task type: {task_type}"})
             continue
-            # "continue" skips to the next task in the loop.
-            # Without it, the code below would still run and crash.
 
-        # ── Step 4: Run the agent ───────────────────────────────
-        # Mark the task as "running" so the dashboard can show it's in progress.
+        # ── Run the agent ───────────────────────────────────────
         update_task(task_id, "running")
 
         try:
-            # Call the agent function with the input from the database.
-            # For write_article, task_input looks like {"topic": "solar energy"}
-            # so task_input["topic"] gives us the topic string.
-            #
-            # The agent function returns a result — for write_article,
-            # that's the article dict with title, summary, body, tags, author.
             result = agent_fn(**task_input)
 
-            # ── Step 4b: Push to TinaCMS ────────────────────────
-            # For now, we push right after writing. Later when you add
-            # an editor agent, you'd remove this and make pushing a
-            # separate task type instead.
-            if task_type == "write_article":
+            if task_input.get("publish"):
                 push_to_tina(result)
 
-            # ── Step 5: Mark as done ────────────────────────────
-            # Save the article to the database so the dashboard can display it.
-            # update_task() converts the dict to JSON for storage.
             update_task(task_id, "done", result)
             print(f"  Task completed successfully.")
 
         except Exception as e:
-            # If anything goes wrong — Claude fails, TinaCMS is down,
-            # invalid JSON, etc. — the agent function raises an Exception.
-            # We catch it here, save the error message, and mark the task
-            # as "failed". Then we move on to the next task.
-            #
-            # This is why we use raise Exception() in write_article.py
-            # instead of sys.exit(). sys.exit() would kill the entire runner.
-            # raise Exception() lets us handle the error gracefully and
-            # keep processing other tasks.
-            #
-            # str(e) converts the Exception object to a plain string
-            # so we can store it in the database.
             print(f"  ERROR: {e}")
             update_task(task_id, "failed", {"error": str(e)})
 
         print("---")
-
-    print("All tasks processed.")
 
 
 # ─── RUN WHEN EXECUTED DIRECTLY ─────────────────────────────────────

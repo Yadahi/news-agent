@@ -195,6 +195,60 @@ export function TaskActions({ task }: { task: Task }) {
                 (() => {
                   try {
                     const article = JSON.parse(task.result);
+                    if (article.error) {
+                      return (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <p className="text-sm font-medium text-red-700">
+                            Agent error
+                          </p>
+                          <p className="text-sm text-red-600 mt-1">
+                            {article.error}
+                          </p>
+                        </div>
+                      );
+                    }
+                    if (article.key_facts) {
+                      return (
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold">{article.topic}</h3>
+                          {article.context && (
+                            <p className="text-sm text-muted-foreground italic">{article.context}</p>
+                          )}
+                          {article.key_facts?.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Key Facts</p>
+                              <ul className="space-y-1">
+                                {article.key_facts.map((fact: string, i: number) => (
+                                  <li key={i} className="text-sm">• {fact}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {article.sources?.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Sources</p>
+                              <ul className="space-y-1">
+                                {article.sources.map((s: { title: string; url: string }, i: number) => (
+                                  <li key={i} className="text-sm">
+                                    <a href={s.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline">{s.title}</a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          {article.angle_suggestions?.length > 0 && (
+                            <div>
+                              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Angle Suggestions</p>
+                              <ul className="space-y-1">
+                                {article.angle_suggestions.map((a: string, i: number) => (
+                                  <li key={i} className="text-sm">• {a}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
                     return (
                       <div className="space-y-4">
                         <div>
