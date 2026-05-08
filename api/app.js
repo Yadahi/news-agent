@@ -11,7 +11,7 @@ app.use(express.json());
 
 app.use("/auth", authRoutes);
 app.use("/api", authMiddleware, taskRoutes);
-app.use("/api", authMiddleware, socialRoutes);
+app.use("/api/social", authMiddleware, socialRoutes);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;

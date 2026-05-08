@@ -2,7 +2,7 @@ const db = require("../db");
 
 function getArticles(req, res, next) {
   try {
-    const { sort, order, page, limit } = req.query;
+    const { order, page, limit } = req.query;
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 10;
     const sortField = "created_at";

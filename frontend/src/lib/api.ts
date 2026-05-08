@@ -9,6 +9,12 @@ interface TaskFilters {
   order?: string;
 }
 
+interface ArticleFilters {
+  page?: number;
+  limit?: number;
+  order?: string;
+}
+
 export type TaskType = "write_article";
 
 async function authFetch(url: string, options: RequestInit = {}) {
@@ -125,4 +131,15 @@ export const runAgents = async () => {
   return authFetch(`${API_URL}/api/run`, {
     method: "POST",
   });
+};
+
+export const getArticles = async (filters: ArticleFilters = {}) => {
+  const params = new URLSearchParams();
+
+  params.set("page", String(filters.page ?? 1));
+  params.set("limit", String(filters.limit ?? 10));
+
+  if (filters.order) params.set("order", filters.order);
+
+  return authFetch(`${API_URL}/api/social/articles?${params.toString()}`);
 };
