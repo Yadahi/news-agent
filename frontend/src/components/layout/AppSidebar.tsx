@@ -6,7 +6,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Newspaper, LogOut } from "lucide-react";
+import { LayoutDashboard, Share2 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 
 export function AppSidebar() {
   return (
@@ -19,13 +20,13 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton>
               <LayoutDashboard />
-              Dashboard
+              <Link to="/dashboard">Dashboard</Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton>
-              <Newspaper />
-              Tasks
+              <Share2 />
+              <Link to="/social">Social Media</Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
