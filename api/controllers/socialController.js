@@ -57,4 +57,25 @@ function getArticles(req, res, next) {
   }
 }
 
-module.exports = { getArticles };
+function getArticle(req, res, next) {
+  try {
+    const { articleTaskId } = req.params;
+
+    console.log(articleTaskId);
+
+    const article = db
+      .prepare("SELECT * FROM tasks WHERE id = ? AND user_id = ?")
+      .get(articleTaskId, req.user.id);
+
+    if (!article) {
+      return next(new AppError("Article not found", 404));
+    }
+    console.log(article);
+
+    res.json(article);
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = { getArticles, getArticle };
