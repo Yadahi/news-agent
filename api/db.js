@@ -23,4 +23,18 @@ db.exec(`CREATE TABLE IF NOT EXISTS users (
             password TEXT NOT NULL
   )`);
 
+db.exec(`CREATE TABLE IF NOT EXISTS social_posts (
+            id TEXT PRIMARY KEY,
+            article_task_id TEXT NOT NULL REFERENCES tasks(id),
+            platform TEXT NOT NULL,
+            post_text TEXT NOT NULL,
+            hashtags TEXT,
+            image_url TEXT,
+            article_url TEXT,
+            status TEXT NOT NULL DEFAULT 'draft',
+            created_at TEXT NOT NULL,
+            posted_at TEXT,
+            platform_post_id TEXT
+  )`);
+
 module.exports = db;

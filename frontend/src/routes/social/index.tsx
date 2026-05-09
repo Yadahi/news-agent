@@ -12,8 +12,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { getArticles } from "@/lib/api";
 import { formatDate } from "@/lib/utils";
-import { FilterSelect } from "@/components/dashboard/FilterSelect";
+import { SortableHeader } from "@/components/dashboard/SortableHeader";
 import type { Task } from "@/components/dashboard/TaskTable";
+
 
 export const Route = createFileRoute("/social/")({
   component: SocialListPage,
@@ -22,6 +23,11 @@ export const Route = createFileRoute("/social/")({
 function SocialListPage() {
   const [page, setPage] = useState(1);
   const [order, setOrder] = useState("desc");
+
+  function handleSort() {
+    setOrder((o) => (o === "desc" ? "asc" : "desc"));
+    setPage(1);
+  }
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["articles", page, order],
@@ -37,21 +43,6 @@ function SocialListPage() {
       <h1 className="text-2xl font-bold mb-6">Social Media</h1>
 
       <div className="rounded-lg border border-border overflow-hidden">
-        <div className="flex items-center gap-3 p-4 border-b border-border">
-          <FilterSelect
-            value={order}
-            onValueChange={(v) => {
-              setOrder(v);
-              setPage(1);
-            }}
-            placeholder="Order"
-            options={[
-              { value: "desc", label: "Newest first" },
-              { value: "asc", label: "Oldest first" },
-            ]}
-          />
-        </div>
-
         {isLoading ? (
           <p className="text-sm text-muted-foreground p-4">Loading articles...</p>
         ) : error ? (
@@ -63,9 +54,13 @@ function SocialListPage() {
                 <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Article
                 </TableHead>
-                <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Date
-                </TableHead>
+                <SortableHeader
+                  label="Date"
+                  field="date"
+                  sort="date"
+                  order={order}
+                  onSort={handleSort}
+                />
                 <TableHead className="px-4 py-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Status
                 </TableHead>
