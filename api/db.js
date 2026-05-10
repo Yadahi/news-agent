@@ -32,6 +32,8 @@ db.exec(`CREATE TABLE IF NOT EXISTS social_posts (
             image_url TEXT,
             article_url TEXT,
             status TEXT NOT NULL DEFAULT 'draft',
+            tone TEXT DEFAULT 'neutral',
+            length TEXT DEFAULT 'medium',
             created_at TEXT NOT NULL,
             posted_at TEXT,
             platform_post_id TEXT

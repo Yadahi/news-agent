@@ -143,3 +143,7 @@ export const getArticles = async (filters: ArticleFilters = {}) => {
 
   return authFetch(`${API_URL}/api/social/articles?${params.toString()}`);
 };
+
+export const getArticle = async (articleTaskId: string) => {
+  return authFetch(`${API_URL}/api/social/articles/${articleTaskId}`);
+};
