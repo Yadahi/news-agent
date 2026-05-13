@@ -16,6 +16,7 @@ app.use("/api/social", authMiddleware, socialRoutes);
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const message = err.statusCode ? err.message : "Something went wrong";
+  if (!err.statusCode) console.error(err);
   res.status(statusCode).json({ message: message });
 });
 
